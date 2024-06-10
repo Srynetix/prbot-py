@@ -1,0 +1,20 @@
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
+
+__pycache__
+*.pyc
+.venv
+
+db.sqlite3*
+.pytest_cache
+.ruff_cache
+.vscode
+.mypy_cache
+.coverage
+
+.env
+htmlcov
+tmp/
