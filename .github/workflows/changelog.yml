@@ -2,11 +2,16 @@ name: CHANGELOG generation
 
 on:
   push:
+    branches:
+      - fix-changelog-permissions
     tags:
       - "**"
 
 jobs:
   changelog:
+    permissions:
+      contents: write
+
     name: Generate changelog
     runs-on: ubuntu-latest
     steps:
@@ -31,4 +36,4 @@ jobs:
           set +e
           git add CHANGELOG.md
           git commit -m "Update changelog"
-          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git origin/main
+          git push https://${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git origin/fix-changelog-permissions
