@@ -93,6 +93,12 @@ COPY ./manage.py /app/manage.py
 COPY ./prbot /app/prbot
 COPY ./docker/entrypoint.sh /usr/bin/prbot
 
+# Try to optimize startup times
+RUN python -m compileall $PYSETUP_PATH
+USER root
+RUN python -m compileall /app && chown appuser:appgroup -R /app 
+USER appuser:appgroup
+
 WORKDIR /app
 EXPOSE 8000
 CMD ["prbot", "serve"]
