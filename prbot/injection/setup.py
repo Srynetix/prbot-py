@@ -1,6 +1,10 @@
 import inject
 import structlog
 
+from prbot.core.commands.processor import (
+    CommandProcessor,
+    CommandProcessorImplementation,
+)
 from prbot.core.sync.processor import SyncProcessor, SyncProcessorImplementation
 from prbot.core.sync.sync_state import (
     PullRequestSyncStateBuilder,
@@ -55,6 +59,10 @@ def _setup_binder(binder: inject.Binder) -> None:
     binder.bind_to_constructor(
         SyncProcessor,
         lambda: SyncProcessorImplementation(),
+    )
+    binder.bind_to_constructor(
+        CommandProcessor,
+        lambda: CommandProcessorImplementation(),
     )
     binder.bind_to_constructor(
         PullRequestSyncStateBuilder,

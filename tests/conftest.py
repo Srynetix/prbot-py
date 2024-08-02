@@ -6,6 +6,10 @@ from tortoise import Tortoise
 from tortoise.contrib.test import _init_db, getDBConfig
 
 from prbot.config.settings import Settings, set_global_settings
+from prbot.core.commands.processor import (
+    CommandProcessor,
+    CommandProcessorImplementation,
+)
 from prbot.core.sync.processor import SyncProcessor, SyncProcessorImplementation
 from prbot.core.sync.sync_state import (
     PullRequestSyncStateBuilder,
@@ -93,6 +97,10 @@ async def injector() -> AsyncGenerator[InjectorFixture, None]:
         binder.bind_to_constructor(
             SyncProcessor,
             lambda: SyncProcessorImplementation(),
+        )
+        binder.bind_to_constructor(
+            CommandProcessor,
+            lambda: CommandProcessorImplementation(),
         )
         binder.bind_to_constructor(
             PullRequestSyncStateBuilder,
