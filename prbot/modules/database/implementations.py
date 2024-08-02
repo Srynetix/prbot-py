@@ -176,6 +176,14 @@ class PullRequestDatabaseImplementation(PullRequestDatabase):
             for model in await PullRequestModel.all().select_related("repository")
         ]
 
+    async def filter(self, *, owner: str, name: str) -> list[PullRequest]:
+        return [
+            self._model_to_domain(model)
+            for model in await PullRequestModel.filter(
+                repository__owner=owner, repository__name=name
+            ).select_related("repository")
+        ]
+
     async def create(self, pull_request: PullRequest) -> PullRequest:
         logger.info("Creating pull request", pull_request=pull_request)
 

@@ -113,6 +113,9 @@ class PullRequestDatabase(ABC):
     async def all(self) -> list[PullRequest]: ...
 
     @abstractmethod
+    async def filter(self, *, owner: str, name: str) -> list[PullRequest]: ...
+
+    @abstractmethod
     async def get(
         self, *, owner: str, name: str, number: int
     ) -> PullRequest | None: ...
