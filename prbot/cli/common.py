@@ -9,9 +9,9 @@ from tortoise import Tortoise
 
 from prbot.config.log import setup_logging
 from prbot.config.sentry import setup_sentry
-from prbot.core.models import PullRequestPath, Repository, RepositoryPath
+from prbot.core.models import PullRequest, PullRequestPath, Repository, RepositoryPath
 from prbot.injection import inject_instance, setup
-from prbot.modules.database.repository import RepositoryDatabase
+from prbot.modules.database.repository import PullRequestDatabase, RepositoryDatabase
 from prbot.modules.database.settings import get_orm_configuration
 from prbot.modules.gif.client import GifClient
 from prbot.modules.github.client import GitHubClient
@@ -104,3 +104,15 @@ async def ensure_repository(path: RepositoryPath) -> Repository:
         raise typer.Exit(code=1)
 
     return repository
+
+
+async def ensure_pull_request(path: PullRequestPath) -> PullRequest:
+    pull_request_db = inject_instance(PullRequestDatabase)
+    pull_request = await pull_request_db.get(
+        owner=path.owner, name=path.name, number=path.number
+    )
+    if pull_request is None:
+        print(f"[red]Unknown pull request: {path}[/red]")
+        raise typer.Exit(code=1)
+
+    return pull_request
