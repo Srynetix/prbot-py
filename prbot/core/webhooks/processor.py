@@ -39,11 +39,13 @@ class PullRequestEventProcessor(EventProcessorBase):
     _api: GitHubClient
     _lock: LockClient
     _sync_processor: SyncProcessor
+    _command_processor: CommandProcessor
 
     def __init__(self) -> None:
         self._api = inject_instance(GitHubClient)
         self._lock = inject_instance(LockClient)
         self._sync_processor = inject_instance(SyncProcessor)
+        self._command_processor = inject_instance(CommandProcessor)
 
     async def process(self, event: GhPullRequestEvent) -> None:
         logger.info("Processing PullRequestEvent", payload=event)
@@ -62,12 +64,41 @@ class PullRequestEventProcessor(EventProcessorBase):
         ]:
             return
 
+        was_opened = event.action == GhPullRequestAction.Opened
+
         await self._sync_processor.process(
             owner=event.repository.owner.login,
             name=event.repository.name,
             number=event.pull_request.number,
-            force_creation=event.action == GhPullRequestAction.Opened,
+            force_creation=was_opened,
         )
+
+        if was_opened:
+            # Handle commands in PR body
+            pr_body = event.pull_request.body
+            if pr_body is not None:
+                needs_sync = False
+
+                for line in pr_body.splitlines():
+                    output = await self._command_processor.process(
+                        owner=event.repository.owner.login,
+                        name=event.repository.name,
+                        number=event.pull_request.number,
+                        author=event.pull_request.user.login,
+                        command=line,
+                        comment_id=None,
+                    )
+
+                    if output.needs_sync:
+                        needs_sync = True
+
+                if needs_sync:
+                    await self._sync_processor.process(
+                        owner=event.repository.owner.login,
+                        name=event.repository.name,
+                        number=event.pull_request.number,
+                        force_creation=False,
+                    )
 
 
 class CheckSuiteEventProcessor(EventProcessorBase):
@@ -98,10 +129,12 @@ class CheckSuiteEventProcessor(EventProcessorBase):
 class IssueCommentEventProcessor(EventProcessorBase):
     _api: GitHubClient
     _sync_processor: SyncProcessor
+    _command_processor: CommandProcessor
 
     def __init__(self) -> None:
         self._api = inject_instance(GitHubClient)
         self._sync_processor = inject_instance(SyncProcessor)
+        self._command_processor = inject_instance(CommandProcessor)
 
     async def process(self, event: GhIssueCommentEvent) -> None:
         logger.info("Processing IssueCommentEvent", payload=event)
@@ -114,9 +147,8 @@ class IssueCommentEventProcessor(EventProcessorBase):
         needs_sync = False
 
         # Try to parse each line as a command
-        command_processor = CommandProcessor()
         for line in event.comment.body.splitlines():
-            output = await command_processor.process(
+            output = await self._command_processor.process(
                 owner=event.repository.owner.login,
                 name=event.repository.name,
                 number=event.issue.number,

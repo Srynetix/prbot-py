@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 import structlog
 
 from prbot.config.settings import get_global_settings
@@ -184,7 +186,8 @@ class CommandParser:
             raise CommandParseError(f'Unknown command "{command_name}"')
 
 
-class CommandProcessor:
+class CommandProcessor(ABC):
+    @abstractmethod
     async def process(
         self,
         *,
@@ -193,7 +196,20 @@ class CommandProcessor:
         number: int,
         author: str,
         command: str,
-        comment_id: int,
+        comment_id: int | None = None,
+    ) -> CommandOutput: ...
+
+
+class CommandProcessorImplementation(CommandProcessor):
+    async def process(
+        self,
+        *,
+        owner: str,
+        name: str,
+        number: int,
+        author: str,
+        command: str,
+        comment_id: int | None = None,
     ) -> CommandOutput:
         ctx = CommandContext(
             owner=owner,
