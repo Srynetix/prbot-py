@@ -6,5 +6,6 @@ pkgs.mkShell {
     pkgs.just
     pkgs.python312
     pkgs.poetry
+    pkgs.git-cliff
   ];
 }
