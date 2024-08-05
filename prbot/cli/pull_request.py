@@ -10,6 +10,7 @@ from .common import (
     async_command,
     build_typer,
     ensure_pull_request,
+    ensure_repository,
 )
 
 app = build_typer()
@@ -30,6 +31,8 @@ async def sync(path: PullRequestPathArg) -> None:
 @async_command(app)
 async def list(path: RepositoryPathArg) -> None:
     """List known pull requests for a specific repository."""
+    await ensure_repository(path)
+
     pull_request_db = inject_instance(PullRequestDatabase)
     pull_requests = await pull_request_db.filter(owner=path.owner, name=path.name)
     if len(pull_requests) == 0:
@@ -38,6 +41,21 @@ async def list(path: RepositoryPathArg) -> None:
 
     for pull_request in pull_requests:
         print(pull_request)
+
+
+@async_command(app)
+async def remove(path: PullRequestPathArg) -> None:
+    """Remove a specific pull request."""
+    await ensure_pull_request(path)
+
+    pull_request_db = inject_instance(PullRequestDatabase)
+    found = await pull_request_db.delete(
+        owner=path.owner, name=path.name, number=path.number
+    )
+    if found:
+        print(f"[green]Pull request '{path}' removed.[/green]")
+    else:
+        print(f"[yellow]Pull request '{path}' not found.[/yellow]")
 
 
 @async_command(app)

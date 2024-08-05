@@ -239,7 +239,7 @@ class PullRequestSyncStateBuilderImplementation(PullRequestSyncStateBuilder):
         self, *, owner: str, name: str, upstream_pr: GhPullRequest
     ) -> list[RepositoryRule]:
         output = []
-        rules = await self._rule_db.list(owner=owner, name=name)
+        rules = await self._rule_db.filter(owner=owner, name=name)
         for rule in rules:
             # Ignore rule without actions or conditions
             if len(rule.actions) == 0 or len(rule.conditions) == 0:

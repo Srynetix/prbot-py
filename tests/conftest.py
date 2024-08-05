@@ -54,7 +54,7 @@ def bot_settings() -> Generator[Settings, None, None]:
         bot_nickname="bot",
         github_personal_token="foo",
         database_url="sqlite://:memory:",
-        lock_url="foo",
+        lock_url="redis://localhost:6379",
         tenor_key="nope",
     )
 

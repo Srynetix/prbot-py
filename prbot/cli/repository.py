@@ -16,10 +16,12 @@ from .common import (
     build_typer,
     ensure_repository,
 )
-from .repository_rules import app as rules_app
+from .merge_rule import app as merge_rules_app
+from .repository_rule import app as rules_app
 
 app = build_typer()
 app.add_typer(rules_app, name="rule", help="Manage repository rules.")
+app.add_typer(merge_rules_app, name="merge-rule", help="Manage merge rules.")
 
 
 @async_command(app)
@@ -55,6 +57,16 @@ async def show(repository_path: RepositoryPathArg) -> None:
     """Show info about a specific repository."""
     repository = await ensure_repository(repository_path)
     print(repository)
+
+
+@async_command(app)
+async def remove(repository_path: RepositoryPathArg) -> None:
+    """Remove a specific repository."""
+    await ensure_repository(repository_path)
+
+    repository_db = inject_instance(RepositoryDatabase)
+    await repository_db.delete(owner=repository_path.owner, name=repository_path.name)
+    print(f"[green]Repository '{repository_path}' deleted.[/green]")
 
 
 @async_command(app)

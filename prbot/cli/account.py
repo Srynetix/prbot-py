@@ -1,4 +1,3 @@
-import typer
 from rich import print
 
 from prbot.core.models import (
@@ -11,19 +10,11 @@ from prbot.modules.database.repository import (
 from prbot.server.crypto import create_access_token
 from prbot.utils.crypto import generate_key_pair
 
-from .common import async_command, build_typer
+from .account_right import app as account_rights_app
+from .common import async_command, build_typer, ensure_external_account
 
 app = build_typer()
-
-
-async def ensure_external_account(username: str) -> ExternalAccount:
-    external_account_db = inject_instance(ExternalAccountDatabase)
-    account = await external_account_db.get(username=username)
-    if account is None:
-        print(f"[red]Unknown external account: {username}[/red]")
-        raise typer.Exit(code=1)
-
-    return account
+app.add_typer(account_rights_app, name="right", help="Manage account rights.")
 
 
 @async_command(app)
@@ -42,18 +33,36 @@ async def new_token(username: str) -> None:
 async def add(username: str) -> None:
     """Add a new external account."""
     external_account_db = inject_instance(ExternalAccountDatabase)
+    key_pair = generate_key_pair()
     data = await external_account_db.create(
-        ExternalAccount(username=username, private_key="foo", public_key="bar")
+        ExternalAccount(
+            username=username,
+            private_key=key_pair.private_key,
+            public_key=key_pair.public_key,
+        )
     )
 
     print(data)
 
 
 @async_command(app)
+async def remove(username: str) -> None:
+    """Remove an existing external account."""
+    await ensure_external_account(username)
+
+    external_account_db = inject_instance(ExternalAccountDatabase)
+    await external_account_db.delete(
+        username=username,
+    )
+
+    print(f"[green]Account '{username}' deleted.[/green]")
+
+
+@async_command(app)
 async def list() -> None:
     """List all known external accounts."""
     external_account_db = inject_instance(ExternalAccountDatabase)
-    accounts = await external_account_db.list()
+    accounts = await external_account_db.all()
     if len(accounts) == 0:
         print("[yellow]No external account found.[/yellow]")
     else:
@@ -73,4 +82,4 @@ async def rotate_keys(username: str) -> None:
     account.public_key = key_pair.public_key
     await external_account_db.update(account)
 
-    print(f"[green]Keys rotated for external account {username}[/green]")
+    print(f"[green]Keys rotated for external account '{username}'[/green]")
