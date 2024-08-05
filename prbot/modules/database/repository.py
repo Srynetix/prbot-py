@@ -63,6 +63,9 @@ class RepositoryDatabase(ABC):
     async def update(self, repository: Repository) -> Repository: ...
 
     @abstractmethod
+    async def delete(self, *, owner: str, name: str) -> bool: ...
+
+    @abstractmethod
     async def get(self, *, owner: str, name: str) -> Repository | None: ...
 
     @abstractmethod
@@ -156,6 +159,9 @@ class PullRequestDatabase(ABC):
     @abstractmethod
     async def create(self, pull_request: PullRequest) -> PullRequest: ...
 
+    @abstractmethod
+    async def delete(self, *, owner: str, name: str, number: int) -> bool: ...
+
     async def get_or_raise(self, *, owner: str, name: str, number: int) -> PullRequest:
         pull_request = await self.get(owner=owner, name=name, number=number)
         if pull_request is None:
@@ -184,6 +190,14 @@ class MergeRuleDatabase(ABC):
 
     @abstractmethod
     async def update(self, merge_rule: MergeRule) -> MergeRule: ...
+
+    @abstractmethod
+    async def filter(self, *, owner: str, name: str) -> list[MergeRule]: ...
+
+    @abstractmethod
+    async def delete(
+        self, *, owner: str, name: str, base_branch: RuleBranch, head_branch: RuleBranch
+    ) -> bool: ...
 
     @abstractmethod
     async def get(
@@ -221,7 +235,7 @@ class RepositoryRuleDatabase(ABC):
     async def all(self) -> list[RepositoryRule]: ...
 
     @abstractmethod
-    async def list(self, *, owner: str, name: str) -> list[RepositoryRule]: ...
+    async def filter(self, *, owner: str, name: str) -> list[RepositoryRule]: ...
 
     @abstractmethod
     async def create(self, repository_rule: RepositoryRule) -> RepositoryRule: ...
@@ -272,7 +286,7 @@ class ExternalAccountDatabase(ABC):
     async def update(self, external_account: ExternalAccount) -> ExternalAccount: ...
 
     @abstractmethod
-    async def list(self) -> list[ExternalAccount]: ...
+    async def delete(self, *, username: str) -> bool: ...
 
     async def get_or_raise(self, *, username: str) -> ExternalAccount:
         external_account = await self.get(username=username)
@@ -301,12 +315,15 @@ class ExternalAccountRightDatabase(ABC):
     async def create(self, right: ExternalAccountRight) -> ExternalAccountRight: ...
 
     @abstractmethod
+    async def delete(self, *, owner: str, name: str, username: str) -> bool: ...
+
+    @abstractmethod
     async def get(
         self, *, owner: str, name: str, username: str
     ) -> ExternalAccountRight | None: ...
 
     @abstractmethod
-    async def list(self, *, username: str) -> list[ExternalAccountRight]: ...
+    async def filter(self, *, username: str) -> list[ExternalAccountRight]: ...
 
     async def get_or_raise(
         self, *, owner: str, name: str, username: str

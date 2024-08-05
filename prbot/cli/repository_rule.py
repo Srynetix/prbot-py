@@ -33,14 +33,19 @@ async def add(
 
 
 @async_command(app)
-async def delete(repository_path: RepositoryPathArg, rule_name: str) -> None:
-    """Delete a specific repository rule."""
+async def remove(repository_path: RepositoryPathArg, rule_name: str) -> None:
+    """Remove a specific repository rule."""
     repository = await ensure_repository(repository_path)
 
     rule_db = inject_instance(RepositoryRuleDatabase)
-    await rule_db.delete(
+    found = await rule_db.delete(
         owner=repository.owner, name=repository.name, rule_name=rule_name
     )
+
+    if found:
+        print("[green]Repository rule removed.[/green]")
+    else:
+        print("[yellow]Repository rule not found.[/yellow]")
 
 
 @async_command(app)
@@ -49,7 +54,7 @@ async def list(repository_path: RepositoryPathArg) -> None:
     await ensure_repository(repository_path)
 
     rule_db = inject_instance(RepositoryRuleDatabase)
-    rules = await rule_db.list(owner=repository_path.owner, name=repository_path.name)
+    rules = await rule_db.filter(owner=repository_path.owner, name=repository_path.name)
     if len(rules) == 0:
         print("[yellow]No rule found.[/yellow]")
         return

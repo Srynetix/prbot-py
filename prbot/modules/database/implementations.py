@@ -86,6 +86,11 @@ class RepositoryDatabaseImplementation(RepositoryDatabase):
 
         return None
 
+    async def delete(self, *, owner: str, name: str) -> bool:
+        logger.info("Deleting repository", owner=owner, name=name)
+        results = await RepositoryModel.filter(owner=owner, name=name).delete()
+        return results > 0
+
     @atomic()
     async def set_default_strategy(
         self, *, owner: str, name: str, strategy: MergeStrategy
@@ -237,6 +242,17 @@ class PullRequestDatabaseImplementation(PullRequestDatabase):
             name=pull_request.repository_path.name,
             number=pull_request.number,
         )
+
+    async def delete(self, *, owner: str, name: str, number: int) -> bool:
+        logger.info("Deleting pull request", owner=owner, name=name, number=number)
+        results = await PullRequestModel.filter(
+            repository__owner=owner, repository__name=name, number=number
+        )
+
+        found = len(results) > 0
+        for result in results:
+            await result.delete()
+        return found
 
     async def get(self, *, owner: str, name: str, number: int) -> PullRequest | None:
         model = await PullRequestModel.get_or_none(
@@ -400,6 +416,36 @@ class MergeRuleDatabaseImplementation(MergeRuleDatabase):
             head_branch=merge_rule.head_branch,
         )
 
+    async def filter(self, *, owner: str, name: str) -> list[MergeRule]:
+        results = await MergeRuleModel.filter(
+            repository__owner=owner,
+            repository__name=name,
+        ).select_related("repository")
+
+        return [self._model_to_domain(model) for model in results]
+
+    async def delete(
+        self, *, owner: str, name: str, base_branch: RuleBranch, head_branch: RuleBranch
+    ) -> bool:
+        logger.info(
+            "Deleting merge rule",
+            owner=owner,
+            name=name,
+            base_branch=base_branch,
+            head_branch=head_branch,
+        )
+        results = await MergeRuleModel.filter(
+            repository__owner=owner,
+            repository__name=name,
+            base_branch=base_branch.get_name(),
+            head_branch=head_branch.get_name(),
+        )
+
+        found = len(results) > 0
+        for result in results:
+            await result.delete()
+        return found
+
     async def get(
         self, *, owner: str, name: str, base_branch: RuleBranch, head_branch: RuleBranch
     ) -> MergeRule | None:
@@ -445,7 +491,7 @@ class RepositoryRuleDatabaseImplementation(RepositoryRuleDatabase):
             for model in await RepositoryRuleModel.all().select_related("repository")
         ]
 
-    async def list(self, *, owner: str, name: str) -> list[RepositoryRule]:
+    async def filter(self, *, owner: str, name: str) -> list[RepositoryRule]:
         rules = (
             await RepositoryRuleModel.filter(
                 repository__owner=owner, repository__name=name
@@ -503,10 +549,14 @@ class RepositoryRuleDatabaseImplementation(RepositoryRuleDatabase):
             "Deleting repository rule", owner=owner, name=name, rule_name=rule_name
         )
 
-        entries = await RepositoryRuleModel.filter(
+        results = await RepositoryRuleModel.filter(
             repository__owner=owner, repository__name=name, name=rule_name
-        ).delete()
-        return entries > 0
+        )
+
+        found = len(results) > 0
+        for result in results:
+            await result.delete()
+        return found
 
     async def get(
         self, *, owner: str, name: str, rule_name: str
@@ -539,7 +589,8 @@ class RepositoryRuleDatabaseImplementation(RepositoryRuleDatabase):
 class ExternalAccountDatabaseImplementation(ExternalAccountDatabase):
     async def all(self) -> list[ExternalAccount]:
         return [
-            self._model_to_domain(model) for model in await ExternalAccountModel.all()
+            self._model_to_domain(model)
+            for model in await ExternalAccountModel.all().order_by("username")
         ]
 
     async def get(self, *, username: str) -> ExternalAccount | None:
@@ -573,11 +624,10 @@ class ExternalAccountDatabaseImplementation(ExternalAccountDatabase):
 
         return self._model_to_domain(model)
 
-    async def list(self) -> list[ExternalAccount]:
-        return [
-            self._model_to_domain(account)
-            for account in await ExternalAccountModel.all().order_by("username")
-        ]
+    async def delete(self, *, username: str) -> bool:
+        logger.info("Deleting external account", username=username)
+        output = await ExternalAccountModel.filter(username=username).delete()
+        return output > 0
 
     async def _raise_on_missing(self, username: str) -> None:
         if not await ExternalAccountModel.exists(username=username):
@@ -600,11 +650,11 @@ class ExternalAccountRightDatabaseImplementation(ExternalAccountRightDatabase):
             )
         ]
 
-    async def list(self, *, username: str) -> list[ExternalAccountRight]:
+    async def filter(self, *, username: str) -> list[ExternalAccountRight]:
         return [
             self._model_to_domain(model)
             for model in await ExternalAccountRightModel.filter(
-                username=username
+                account__username=username
             ).select_related("repository", "account")
         ]
 
@@ -625,6 +675,19 @@ class ExternalAccountRightDatabaseImplementation(ExternalAccountRightDatabase):
             name=right.repository_path.name,
             username=right.username,
         )
+
+    async def delete(self, *, owner: str, name: str, username: str) -> bool:
+        logger.info(
+            "Deleting external account right", owner=owner, name=name, username=username
+        )
+        results = await ExternalAccountRightModel.filter(
+            repository__owner=owner, repository__name=name, account__username=username
+        )
+
+        found = len(results) > 0
+        for result in results:
+            await result.delete()
+        return found
 
     async def get(
         self, *, owner: str, name: str, username: str

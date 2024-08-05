@@ -9,9 +9,21 @@ from tortoise import Tortoise
 
 from prbot.config.log import setup_logging
 from prbot.config.sentry import setup_sentry
-from prbot.core.models import PullRequest, PullRequestPath, Repository, RepositoryPath
+from prbot.core.models import (
+    ExternalAccount,
+    PullRequest,
+    PullRequestPath,
+    Repository,
+    RepositoryPath,
+    RuleBranch,
+    RuleBranchFactory,
+)
 from prbot.injection import inject_instance, setup
-from prbot.modules.database.repository import PullRequestDatabase, RepositoryDatabase
+from prbot.modules.database.repository import (
+    ExternalAccountDatabase,
+    PullRequestDatabase,
+    RepositoryDatabase,
+)
 from prbot.modules.database.settings import get_orm_configuration
 from prbot.modules.gif.client import GifClient
 from prbot.modules.github.client import GitHubClient
@@ -31,6 +43,7 @@ RepositoryPathArg = Annotated[
 PullRequestPathArg = Annotated[
     PullRequestPath, typer.Argument(parser=PullRequestPath.from_str)
 ]
+RuleBranchArg = Annotated[RuleBranch, typer.Argument(parser=RuleBranchFactory.from_str)]
 RegexPattern = Annotated[re.Pattern[str], typer.Argument(parser=parse_regex)]
 
 
@@ -116,3 +129,13 @@ async def ensure_pull_request(path: PullRequestPath) -> PullRequest:
         raise typer.Exit(code=1)
 
     return pull_request
+
+
+async def ensure_external_account(username: str) -> ExternalAccount:
+    external_account_db = inject_instance(ExternalAccountDatabase)
+    account = await external_account_db.get(username=username)
+    if account is None:
+        print(f"[red]Unknown external account: {username}[/red]")
+        raise typer.Exit(code=1)
+
+    return account
