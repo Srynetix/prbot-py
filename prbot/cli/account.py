@@ -42,8 +42,13 @@ async def new_token(username: str) -> None:
 async def add(username: str) -> None:
     """Add a new external account."""
     external_account_db = inject_instance(ExternalAccountDatabase)
+    key_pair = generate_key_pair()
     data = await external_account_db.create(
-        ExternalAccount(username=username, private_key="foo", public_key="bar")
+        ExternalAccount(
+            username=username,
+            private_key=key_pair.private_key,
+            public_key=key_pair.public_key,
+        )
     )
 
     print(data)
