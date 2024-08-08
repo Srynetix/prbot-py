@@ -4,7 +4,11 @@ from prbot.core.commit_status.builder import CommitStatusBuilder
 from prbot.core.commit_status.processor import CommitStatusProcessor
 from prbot.core.models import CheckStatus, QaStatus
 from prbot.core.sync.sync_state import PullRequestSyncState
-from prbot.modules.github.models import GhCommitStatusState, GhReviewDecision
+from prbot.modules.github.models import (
+    GhCommitStatusState,
+    GhMergeableState,
+    GhReviewDecision,
+)
 from tests.conftest import get_fake_github_http_client
 from tests.utils.http import HttpExpectation
 from tests.utils.sync_state import dummy_sync_state
@@ -51,9 +55,9 @@ def test_changes_required() -> None:
 
 def test_not_mergeable() -> None:
     check(
-        dummy_sync_state(mergeable=False),
-        "PR is not mergeable",
-        GhCommitStatusState.Failure,
+        dummy_sync_state(mergeable_state=GhMergeableState.Conflicting),
+        "PR is not mergeable yet",
+        GhCommitStatusState.Pending,
     )
 
 

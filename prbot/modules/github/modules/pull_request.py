@@ -2,7 +2,10 @@ import structlog
 
 from prbot.core.models import MergeStrategy
 from prbot.modules.github.models import (
+    GhMergeableState,
+    GhMergeStateStatus,
     GhPullRequest,
+    GhPullRequestExtraData,
     GhPullRequestMergeRequest,
     GhReviewDecision,
     GhReviewersAddRequest,
@@ -67,14 +70,16 @@ class GitHubPullRequestModule(GitHubModule):
             ).model_dump(),
         )
 
-    async def review_decision(
+    async def get_extra_data(
         self, *, owner: str, name: str, number: int
-    ) -> GhReviewDecision | None:
+    ) -> GhPullRequestExtraData:
         graph_query = """
             query {{
                 repository(owner: "{owner}", name: "{name}") {{
                     pullRequest(number: {number}) {{
                         reviewDecision
+                        mergeable
+                        mergeStateStatus
                     }}
                 }}
             }}
@@ -85,7 +90,21 @@ class GitHubPullRequestModule(GitHubModule):
         )
 
         data = response.json()
-        decision = data["data"]["repository"]["pullRequest"]["reviewDecision"]
-        if decision is not None:
-            return GhReviewDecision(decision)
-        return None
+        decision_raw = data["data"]["repository"]["pullRequest"]["reviewDecision"]
+        if decision_raw is not None:
+            decision = GhReviewDecision(decision_raw)
+        else:
+            decision = None
+
+        mergeable_state = GhMergeableState(
+            data["data"]["repository"]["pullRequest"]["mergeable"]
+        )
+        merge_state_status = GhMergeStateStatus(
+            data["data"]["repository"]["pullRequest"]["mergeStateStatus"]
+        )
+
+        return GhPullRequestExtraData(
+            review_decision=decision,
+            mergeable_state=mergeable_state,
+            merge_state_status=merge_state_status,
+        )

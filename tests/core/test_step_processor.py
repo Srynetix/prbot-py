@@ -5,7 +5,11 @@ from prbot.core.step.builder import StepLabelBuilder
 from prbot.core.step.models import StepLabel
 from prbot.core.step.processor import StepLabelProcessor
 from prbot.core.sync.sync_state import PullRequestSyncState
-from prbot.modules.github.models import GhLabelsResponse, GhReviewDecision
+from prbot.modules.github.models import (
+    GhLabelsResponse,
+    GhMergeableState,
+    GhReviewDecision,
+)
 from tests.conftest import get_fake_github_http_client
 from tests.utils.http import HttpExpectation
 from tests.utils.sync_state import dummy_sync_state
@@ -45,7 +49,10 @@ def test_awaiting_merge() -> None:
 
 
 def test_awaiting_changes() -> None:
-    check(dummy_sync_state(mergeable=False), StepLabel.AwaitingChanges)
+    check(
+        dummy_sync_state(mergeable_state=GhMergeableState.Conflicting),
+        StepLabel.AwaitingChanges,
+    )
     check(dummy_sync_state(qa_status=QaStatus.Fail), StepLabel.AwaitingChanges)
     check(dummy_sync_state(valid_pr_title=False), StepLabel.AwaitingChanges)
     check(dummy_sync_state(check_status=CheckStatus.Fail), StepLabel.AwaitingChanges)

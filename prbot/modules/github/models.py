@@ -112,6 +112,23 @@ class GhMergeStrategy(enum.StrEnum):
     Rebase = "rebase"
 
 
+class GhMergeableState(enum.StrEnum):
+    Conflicting = "CONFLICTING"
+    Mergeable = "MERGEABLE"
+    Unknown = "UNKNOWN"
+
+
+class GhMergeStateStatus(enum.StrEnum):
+    Behind = "BEHIND"
+    Blocked = "BLOCKED"
+    Clean = "CLEAN"
+    Dirty = "DIRTY"
+    Draft = "DRAFT"
+    HasHooks = "HAS_HOOKS"
+    Unknown = "UNKNOWN"
+    Unstable = "UNSTABLE"
+
+
 class GhPullRequestShort(BaseModel):
     number: int
     head: GhBranchShort
@@ -135,8 +152,6 @@ class GhPullRequest(BaseModel):
     head: GhBranch
     base: GhBranch
     merged: bool | None = None
-    mergeable: bool | None = None
-    rebaseable: bool | None = None
 
     def to_short_format(self) -> GhPullRequestShort:
         return GhPullRequestShort(
@@ -334,3 +349,9 @@ class GhPullRequestMergeRequest(BaseModel):
     commit_title: str
     commit_message: str
     merge_method: str
+
+
+class GhPullRequestExtraData(BaseModel):
+    review_decision: GhReviewDecision | None
+    mergeable_state: GhMergeableState
+    merge_state_status: GhMergeStateStatus

@@ -125,7 +125,7 @@ class SummaryBuilder:
         self, *, sync_state: PullRequestSyncState
     ) -> str:
         mergeable_message = ""
-        if sync_state.mergeable or sync_state.merged:
+        if sync_state.can_merge or sync_state.merged:
             mergeable_message = "Yes :heavy_check_mark:"
         else:
             mergeable_message = "No :x:"
