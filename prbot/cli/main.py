@@ -36,6 +36,24 @@ def dev() -> None:
 
 
 @app.command()
+def shell() -> None:
+    import IPython
+    from traitlets.config import Config
+
+    c = Config()
+    c.InteractiveShellApp.exec_lines = [
+        "%autoawait",
+        # Auto-setup injections for ease of use
+        "from prbot.injection.setup import setup_injections",
+        "setup_injections()",
+        "from prbot.prelude import *",
+    ]
+    c.TerminalIPythonApp.display_banner = False
+
+    IPython.start_ipython(config=c, argv=[])  # type: ignore
+
+
+@app.command()
 def serve() -> None:
     """Start the production server."""
     settings = get_global_settings()
