@@ -10,7 +10,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.12"
-fastapi = "^0.111.0"
+fastapi = "^0.112.0"
 inject = "^5.2.1"
 typer = "^0.12.3"
 tortoise-orm = {extras = ["asyncpg"], version = "^0.21.5"}
