@@ -42,8 +42,14 @@ class LockClientImplementation(LockClient):
     async def lock(self, key: str) -> AsyncGenerator[None, None]:
         try:
             lock = self._client.lock(key)
-            await lock.acquire(blocking_timeout=0.1)
-            yield
-            await lock.release()
+            acquired = await lock.acquire(blocking_timeout=0.1)
         except Exception as exc:
             raise LockException(str(exc)) from exc
+
+        if acquired:
+            try:
+                yield
+            finally:
+                await lock.release()
+        else:
+            raise LockException("Could not acquire lock.")
