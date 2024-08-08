@@ -41,6 +41,13 @@ class SummaryProcessor:
         else:
             try:
                 async with self._lock.lock(f"summary.{owner}.{name}.{number}"):
+                    # Check if comment ID was filled in the meantime.
+                    updated_pr = await self._pull_request_db.get_or_raise(
+                        owner=owner, name=name, number=number
+                    )
+                    if updated_pr.status_comment_id > 0:
+                        return await self.process(sync_state=sync_state)
+
                     summary = self._builder.build(sync_state=sync_state)
                     comment_id = await self._api.issues().create_comment(
                         owner=owner, name=name, number=number, message=summary
