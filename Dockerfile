@@ -1,6 +1,6 @@
 # Adapted from https://github.com/orgs/python-poetry/discussions/1879#discussioncomment-216865
 
-FROM python:3.12.3-slim AS python-base
+FROM python:3.12.5-slim AS python-base
 
 ENV \
     # Python
