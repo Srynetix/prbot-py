@@ -42,6 +42,8 @@ from prbot.modules.github.models import (
     GhCheckConclusion,
     GhCheckRun,
     GhCheckStatus,
+    GhMergeableState,
+    GhMergeStateStatus,
     GhPullRequest,
     GhPullRequestShort,
     GhPullRequestState,
@@ -93,7 +95,17 @@ async def test_checks_skipped() -> None:
         .with_input(method="POST", url="/graphql", json=HttpExpectation.IGNORE)
         .with_output_status(200)
         .with_output_json(
-            {"data": {"repository": {"pullRequest": {"reviewDecision": "APPROVED"}}}}
+            {
+                "data": {
+                    "repository": {
+                        "pullRequest": {
+                            "reviewDecision": "APPROVED",
+                            "mergeable": "MERGEABLE",
+                            "mergeStateStatus": "CLEAN",
+                        }
+                    }
+                }
+            }
         )
     )
 
@@ -142,7 +154,17 @@ async def test_checks_empty() -> None:
         .with_input(method="POST", url="/graphql", json=HttpExpectation.IGNORE)
         .with_output_status(200)
         .with_output_json(
-            {"data": {"repository": {"pullRequest": {"reviewDecision": "APPROVED"}}}}
+            {
+                "data": {
+                    "repository": {
+                        "pullRequest": {
+                            "reviewDecision": "APPROVED",
+                            "mergeable": "MERGEABLE",
+                            "mergeStateStatus": "CLEAN",
+                        }
+                    }
+                }
+            }
         )
     )
 
@@ -183,7 +205,17 @@ async def test_strategy_override() -> None:
         .with_input(method="POST", url="/graphql", json=HttpExpectation.IGNORE)
         .with_output_status(200)
         .with_output_json(
-            {"data": {"repository": {"pullRequest": {"reviewDecision": "APPROVED"}}}}
+            {
+                "data": {
+                    "repository": {
+                        "pullRequest": {
+                            "reviewDecision": "APPROVED",
+                            "mergeable": "MERGEABLE",
+                            "mergeStateStatus": "CLEAN",
+                        }
+                    }
+                }
+            }
         )
     )
 
@@ -284,7 +316,11 @@ async def test_sync_state_builder() -> None:
             {
                 "data": {
                     "repository": {
-                        "pullRequest": {"reviewDecision": "CHANGES_REQUESTED"}
+                        "pullRequest": {
+                            "reviewDecision": "CHANGES_REQUESTED",
+                            "mergeable": "MERGEABLE",
+                            "mergeStateStatus": "CLEAN",
+                        }
                     }
                 }
             }
@@ -336,7 +372,8 @@ async def test_sync_state_builder() -> None:
         locked=False,
         wip=False,
         automerge=True,
-        mergeable=True,
+        mergeable_state=GhMergeableState.Mergeable,
+        merge_state_status=GhMergeStateStatus.Clean,
         merged=False,
         merge_strategy=MergeStrategy.Rebase,
         head_sha="654321",

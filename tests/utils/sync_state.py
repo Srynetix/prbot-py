@@ -2,7 +2,11 @@ from typing import Any
 
 from prbot.core.models import CheckStatus, MergeStrategy, QaStatus
 from prbot.core.sync.sync_state import PullRequestSyncState, PullRequestSyncStateBuilder
-from prbot.modules.github.models import GhReviewDecision
+from prbot.modules.github.models import (
+    GhMergeableState,
+    GhMergeStateStatus,
+    GhReviewDecision,
+)
 
 
 def dummy_sync_state(**kwargs: Any) -> PullRequestSyncState:
@@ -17,7 +21,8 @@ def dummy_sync_state(**kwargs: Any) -> PullRequestSyncState:
         head_sha="123456",
         locked=False,
         merge_strategy=MergeStrategy.Merge,
-        mergeable=True,
+        mergeable_state=GhMergeableState.Mergeable,
+        merge_state_status=GhMergeStateStatus.Clean,
         merged=False,
         qa_status=QaStatus.Pass,
         review_decision=GhReviewDecision.Approved,

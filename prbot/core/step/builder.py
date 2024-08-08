@@ -5,14 +5,15 @@ from prbot.core.sync.sync_state import PullRequestSyncState
 
 class StepLabelBuilder:
     def build(self, *, sync_state: PullRequestSyncState) -> StepLabel:
-        if sync_state.wip:
+        if sync_state.merged:
+            return StepLabel.Merged
+
+        elif sync_state.wip:
             return StepLabel.Wip
 
         elif sync_state.valid_pr_title:
             if sync_state.check_status in [CheckStatus.Pass, CheckStatus.Skipped]:
-                if sync_state.changes_requested or (
-                    not sync_state.mergeable and not sync_state.merged
-                ):
+                if sync_state.changes_requested or not sync_state.can_merge:
                     return StepLabel.AwaitingChanges
 
                 elif sync_state.review_required:

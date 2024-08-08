@@ -20,7 +20,10 @@ class CommitStatusBuilder:
         state = GhCommitStatusState.Success
         message = "All good"
 
-        if sync_state.wip:
+        if sync_state.merged:
+            message = "PR merged"
+            state = GhCommitStatusState.Success
+        elif sync_state.wip:
             message = "PR is still in WIP"
             state = GhCommitStatusState.Pending
         elif sync_state.valid_pr_title:
@@ -34,9 +37,9 @@ class CommitStatusBuilder:
                 if sync_state.changes_requested:
                     message = "Changes required"
                     state = GhCommitStatusState.Failure
-                elif not sync_state.mergeable and not sync_state.merged:
-                    message = "PR is not mergeable"
-                    state = GhCommitStatusState.Failure
+                elif not sync_state.can_merge:
+                    message = "PR is not mergeable yet"
+                    state = GhCommitStatusState.Pending
                 elif sync_state.review_required:
                     message = "Waiting on reviews"
                     state = GhCommitStatusState.Pending

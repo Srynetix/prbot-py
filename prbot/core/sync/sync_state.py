@@ -35,6 +35,8 @@ from prbot.modules.github.client import GitHubClient
 from prbot.modules.github.models import (
     GhCheckConclusion,
     GhCheckRun,
+    GhMergeableState,
+    GhMergeStateStatus,
     GhPullRequest,
     GhReviewDecision,
 )
@@ -53,6 +55,8 @@ class PullRequestSyncState(BaseModel):
     rules: list[RepositoryRule]
 
     review_decision: GhReviewDecision | None
+    mergeable_state: GhMergeableState
+    merge_state_status: GhMergeStateStatus
 
     title: str
     title_regex: str
@@ -62,7 +66,6 @@ class PullRequestSyncState(BaseModel):
     wip: bool
 
     automerge: bool
-    mergeable: bool
     merged: bool
     merge_strategy: MergeStrategy
 
@@ -79,6 +82,14 @@ class PullRequestSyncState(BaseModel):
     @property
     def review_skipped(self) -> bool:
         return self.review_decision is None
+
+    @property
+    def can_merge(self) -> bool:
+        return (
+            self.mergeable_state == GhMergeableState.Mergeable
+            and self.merge_state_status
+            in [GhMergeStateStatus.Clean, GhMergeStateStatus.Unstable]
+        )
 
 
 class PullRequestSyncStateBuilder(ABC):
@@ -147,7 +158,7 @@ class PullRequestSyncStateBuilderImplementation(PullRequestSyncStateBuilder):
         )
 
         # Reviews
-        decision = await self._api.pull_requests().review_decision(
+        extra_data = await self._api.pull_requests().get_extra_data(
             owner=owner, name=name, number=number
         )
 
@@ -160,13 +171,12 @@ class PullRequestSyncStateBuilderImplementation(PullRequestSyncStateBuilder):
             head_sha=upstream_pr.head.sha,
             check_status=check_result,
             check_url=self._get_checks_url(owner=owner, name=name, number=number),
-            review_decision=decision,
+            review_decision=extra_data.review_decision,
+            mergeable_state=extra_data.mergeable_state,
+            merge_state_status=extra_data.merge_state_status,
             automerge=local_pr.automerge,
             locked=local_pr.locked,
             merge_strategy=strategy,
-            mergeable=upstream_pr.mergeable
-            if upstream_pr.mergeable is not None
-            else True,
             merged=upstream_pr.merged is True,
             qa_status=local_pr.qa_status,
             rules=rules,

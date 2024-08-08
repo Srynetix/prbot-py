@@ -9,3 +9,4 @@ class StepLabel(enum.StrEnum):
     AwaitingQa = "awaiting-qa"
     Locked = "locked"
     AwaitingMerge = "awaiting-merge"
+    Merged = "merged"

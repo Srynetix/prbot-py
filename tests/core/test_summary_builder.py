@@ -9,7 +9,7 @@ from prbot.core.models import (
 )
 from prbot.core.summary.builder import SummaryBuilder
 from prbot.core.sync.sync_state import PullRequestSyncState
-from prbot.modules.github.models import GhReviewDecision
+from prbot.modules.github.models import GhMergeableState, GhReviewDecision
 from tests.utils.sync_state import dummy_sync_state
 
 pytestmark = pytest.mark.anyio
@@ -178,7 +178,7 @@ async def test_checks_lock_message(locked: bool, output: str) -> None:
     "sync_state,output",
     [
         (
-            dummy_sync_state(mergeable=True),
+            dummy_sync_state(mergeable_state=GhMergeableState.Mergeable),
             "> - :twisted_rightwards_arrows: **Mergeable?**: Yes :heavy_check_mark:",
         ),
         (
@@ -186,7 +186,9 @@ async def test_checks_lock_message(locked: bool, output: str) -> None:
             "> - :twisted_rightwards_arrows: **Mergeable?**: Yes :heavy_check_mark:",
         ),
         (
-            dummy_sync_state(mergeable=False, merged=False),
+            dummy_sync_state(
+                mergeable_state=GhMergeableState.Conflicting, merged=False
+            ),
             "> - :twisted_rightwards_arrows: **Mergeable?**: No :x:",
         ),
     ],
