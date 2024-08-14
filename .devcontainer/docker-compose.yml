@@ -1,0 +1,24 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: development
+    command: sleep infinity
+    volumes:
+      - ..:/app
+
+  database:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+      - POSTGRES_DB=prbot
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  
+  redis:
+    image: redis:7-alpine
+
+volumes:
+  pgdata:

@@ -21,6 +21,7 @@ You need:
 - *Optional*: [Just], to run tasks
 
 > **Note**: if you use Nix and `direnv`, you can use the included `.envrc` / `shell.nix` file to automatically setup Python/Git/Just.
+> You can also use the included [devcontainers](https://containers.dev) configuration.
 
 To configure your environment file, copy the `.env.dist` file to a `.env` file in the project root, and fill the blanks.
 
