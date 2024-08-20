@@ -37,7 +37,7 @@ isort = "^5.13.2"
 mypy = "^1.10.0"
 pytest = "^8.2.2"
 pytest-cov = "^5.0.0"
-ruff = "^0.5.0"
+ruff = "^0.6.0"
 
 [tool.mypy]
 disable_error_code = "var-annotated,type-abstract"
